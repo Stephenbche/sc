@@ -83,6 +83,35 @@
       <div id="currentResult" class="current-result" aria-live="polite"></div>
     </section>
 
+    <section class="panel listing-panel" aria-labelledby="listingTitle">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">Etsy上架助手</p>
+          <h2 id="listingTitle">商品上架文案生成</h2>
+        </div>
+        <p class="hint">仅基于已填写信息生成，不编造治疗、招财、改善睡眠等无法证明的功效。</p>
+      </div>
+
+      <form id="listingForm">
+        <div class="grid listing-grid">
+          <label>产品名称<input id="listingName" type="text" placeholder="例如：Handmade Ceramic Mug" required /></label>
+          <label>材质<input id="listingMaterial" type="text" placeholder="例如：Ceramic, bamboo, cotton" required /></label>
+          <label>尺寸<input id="listingSize" type="text" placeholder="例如：10 x 8 cm" required /></label>
+          <label>重量<input id="listingWeight" type="text" placeholder="例如：320 g" required /></label>
+          <label>颜色<input id="listingColor" type="text" placeholder="例如：White, sage green" required /></label>
+          <label>使用场景<input id="listingUseCase" type="text" placeholder="例如：Home office, kitchen, gifting" required /></label>
+          <label>包装内容<input id="listingPackage" type="text" placeholder="例如：1 mug, 1 kraft gift box" required /></label>
+          <label>目标客户<input id="listingAudience" type="text" placeholder="例如：Coffee lovers, new homeowners" required /></label>
+          <label class="wide-field">核心卖点<input id="listingSellingPoints" type="text" placeholder="例如：Minimalist design, reusable, gift-ready packaging" required /></label>
+        </div>
+        <div class="actions">
+          <button class="primary" type="submit">生成上架文案</button>
+          <button class="secondary" type="button" id="clearListingBtn">清空文案</button>
+        </div>
+      </form>
+      <div id="listingOutput" class="listing-output" aria-live="polite"></div>
+    </section>
+
     <section class="panel" aria-labelledby="resultTitle">
       <div class="section-heading">
         <div>
