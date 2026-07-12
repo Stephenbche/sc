@@ -13,6 +13,8 @@ const tableWrap = document.getElementById("tableWrap");
 const productCount = document.getElementById("productCount");
 const submitBtn = document.getElementById("submitBtn");
 const currentResult = document.getElementById("currentResult");
+const listingForm = document.getElementById("listingForm");
+const listingOutput = document.getElementById("listingOutput");
 
 function toNumber(value) { return Number.parseFloat(value) || 0; }
 function money(value) { return `$${value.toFixed(2)}`; }
@@ -88,6 +90,157 @@ function escapeHtml(value) {
   return String(value).replace(/[&<>'"]/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;" }[char]));
 }
 
+function escapeAttribute(value) {
+  return escapeHtml(value).replace(/`/g, "&#96;");
+}
+
+function splitList(value) {
+  return String(value)
+    .split(/[,，、;；\n]/)
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
+
+function titleCase(value) {
+  return String(value)
+    .toLowerCase()
+    .replace(/\b[a-z]/g, (char) => char.toUpperCase());
+}
+
+function uniqueItems(items) {
+  const seen = new Set();
+  return items.filter((item) => {
+    const key = item.toLowerCase();
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
+function buildEtsyTags(data) {
+  const sourceTags = [
+    data.name,
+    ...splitList(data.material),
+    ...splitList(data.color),
+    ...splitList(data.useCase),
+    ...splitList(data.audience),
+    ...splitList(data.sellingPoints),
+    "gift for her",
+    "gift for him",
+    "home decor",
+    "handmade style",
+    "desk accessory",
+    "housewarming gift",
+    "minimalist gift"
+  ];
+  const tags = uniqueItems(sourceTags)
+    .map((tag) => tag.toLowerCase().replace(/\s+/g, " ").trim().slice(0, 20))
+    .filter((tag) => tag.length > 1)
+    .slice(0, 13);
+  const fallbackTags = ["small business", "etsy gift", "unique gift", "daily use", "custom style", "modern decor", "ready to ship"];
+  for (const tag of fallbackTags) {
+    if (tags.length >= 13) break;
+    if (!tags.includes(tag)) tags.push(tag);
+  }
+  return tags.slice(0, 13);
+}
+
+function generateListingCopy(data) {
+  const materials = splitList(data.material).join(", ") || data.material;
+  const colors = splitList(data.color).join(", ") || data.color;
+  const sellingPoints = splitList(data.sellingPoints);
+  const primaryPoints = sellingPoints.length ? sellingPoints : [data.sellingPoints];
+  const titleParts = uniqueItems([
+    titleCase(data.name),
+    titleCase(materials),
+    titleCase(colors),
+    titleCase(data.useCase),
+    titleCase(data.audience),
+    "Gift Ready"
+  ]).filter(Boolean);
+  const title = titleParts.join(" | ").slice(0, 140);
+  const bulletPoints = primaryPoints.slice(0, 5).map((point) => `${point} for ${data.useCase}`);
+  const tags = buildEtsyTags(data);
+  const photoChecklist = [
+    `Hero image showing the full ${data.name} on a clean background`,
+    `Close-up of the ${materials} texture and finish`,
+    `Scale photo showing size: ${data.size}`,
+    `Color detail photo showing ${colors}`,
+    `Lifestyle scene for ${data.useCase}`,
+    `Photo of all packaging contents: ${data.package}`,
+    `Gift-ready packaging or unboxing image`
+  ];
+  const packagingNotes = [
+    `Protect the ${materials} surface with soft wrapping before placing it in the box.`,
+    `Confirm the package includes: ${data.package}.`,
+    `Add corner, edge, or void-fill protection if the item can move during transit.`,
+    `Label fragile or keep-dry requirements only when they are true for this product.`,
+    `Keep the final parcel weight close to ${data.weight} plus packaging for accurate shipping quotes.`
+  ];
+  const description = [
+    `Bring a thoughtful, polished detail to ${data.useCase} with this ${data.name}.`,
+    `It is made from ${materials}, comes in ${colors}, and is designed for ${data.audience}.`,
+    `Size: ${data.size}. Weight: ${data.weight}.`,
+    `Key features: ${primaryPoints.join("; ")}.`,
+    `Package includes: ${data.package}.`,
+    "Please review the size, color, and package details before ordering. This listing avoids unsupported claims and describes only visible, practical product features."
+  ].join("\n\n");
+  const chineseDescription = [
+    `这款${data.name}适合${data.useCase}，目标客户为${data.audience}。`,
+    `材质：${data.material}；尺寸：${data.size}；重量：${data.weight}；颜色：${data.color}。`,
+    `核心卖点：${data.sellingPoints}。`,
+    `包装内容：${data.package}。`,
+    "文案只描述产品外观、材质、用途和包装信息，不包含治疗、招财、改善睡眠或其他无法证明的功效。"
+  ].join("\n");
+  return { title, bulletPoints, description, tags, photoChecklist, packagingNotes, chineseDescription };
+}
+
+function renderList(items) {
+  return `<ul>${items.map((item) => `<li>${escapeHtml(item)}</li>`).join("")}</ul>`;
+}
+
+function renderListingOutput(copy) {
+  listingOutput.innerHTML = `
+    <div class="copy-card">
+      <h3>1. Etsy英文商品标题</h3>
+      <p>${escapeHtml(copy.title)}</p>
+    </div>
+    <div class="copy-card">
+      <h3>2. 简短英文卖点</h3>
+      ${renderList(copy.bulletPoints)}
+    </div>
+    <div class="copy-card">
+      <h3>3. 完整英文商品描述</h3>
+      <pre>${escapeHtml(copy.description)}</pre>
+    </div>
+    <div class="copy-card">
+      <h3>4. 13个Etsy搜索标签</h3>
+      <div class="tag-list">${copy.tags.map((tag) => `<span>${escapeHtml(tag)}</span>`).join("")}</div>
+    </div>
+    <div class="copy-card">
+      <h3>5. 图片拍摄清单</h3>
+      ${renderList(copy.photoChecklist)}
+    </div>
+    <div class="copy-card">
+      <h3>6. 包装注意事项</h3>
+      ${renderList(copy.packagingNotes)}
+    </div>
+    <div class="copy-card">
+      <h3>7. 中文版本说明</h3>
+      <pre>${escapeHtml(copy.chineseDescription)}</pre>
+    </div>
+    <button class="secondary" type="button" id="copyListingBtn" data-copy="${escapeAttribute([
+      copy.title,
+      copy.bulletPoints.join("\\n"),
+      copy.description,
+      copy.tags.join(", "),
+      copy.photoChecklist.join("\\n"),
+      copy.packagingNotes.join("\\n"),
+      copy.chineseDescription
+    ].join("\\n\\n"))}">复制全部文案</button>
+  `;
+}
+
 function readForm() {
   const product = { id: document.getElementById("editingId").value || makeId() };
   fields.forEach((field) => {
@@ -148,6 +301,34 @@ document.getElementById("exportBtn").addEventListener("click", () => {
   link.download = "跨境电商利润计算.csv";
   link.click();
   URL.revokeObjectURL(link.href);
+});
+
+listingForm.addEventListener("submit", (event) => {
+  event.preventDefault();
+  if (!listingForm.reportValidity()) return;
+  const data = {
+    name: document.getElementById("listingName").value.trim(),
+    material: document.getElementById("listingMaterial").value.trim(),
+    size: document.getElementById("listingSize").value.trim(),
+    weight: document.getElementById("listingWeight").value.trim(),
+    color: document.getElementById("listingColor").value.trim(),
+    useCase: document.getElementById("listingUseCase").value.trim(),
+    package: document.getElementById("listingPackage").value.trim(),
+    audience: document.getElementById("listingAudience").value.trim(),
+    sellingPoints: document.getElementById("listingSellingPoints").value.trim()
+  };
+  renderListingOutput(generateListingCopy(data));
+});
+
+document.getElementById("clearListingBtn").addEventListener("click", () => {
+  listingForm.reset();
+  listingOutput.innerHTML = "";
+});
+
+listingOutput.addEventListener("click", async (event) => {
+  if (event.target.id !== "copyListingBtn") return;
+  await navigator.clipboard.writeText(event.target.dataset.copy);
+  event.target.textContent = "已复制";
 });
 
 window.editProduct = function editProduct(id) {
