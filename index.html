@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>跨境电商利润计算器</title>
+  <link rel="stylesheet" href="./style.css" />
+</head>
+<body>
+  <header class="hero">
+    <div>
+      <p class="eyebrow">中澳跨境电商工具</p>
+      <h1>跨境电商利润计算器</h1>
+      <p class="subtitle">录入采购、物流、平台与税费信息，自动计算净利润、盈亏平衡售价和广告预算上限。</p>
+    </div>
+    <div class="hero-card">
+      <span>自动保存</span>
+      <strong id="productCount">0 个产品</strong>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="panel form-panel" aria-labelledby="formTitle">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">产品录入</p>
+          <h2 id="formTitle">添加或编辑产品</h2>
+        </div>
+        <button class="secondary" type="button" id="loadSampleBtn">载入示例数据</button>
+      </div>
+
+      <form id="productForm">
+        <input type="hidden" id="editingId" />
+        <details class="input-guide">
+          <summary>输入项目填写说明</summary>
+          <div class="guide-table-wrap">
+            <table class="guide-table">
+              <thead>
+                <tr>
+                  <th>输入项目</th>
+                  <th>填什么</th>
+                  <th>示例</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td>产品名称</td><td>产品名字</td><td>水晶桌面摆件</td></tr>
+                <tr><td>人民币采购价</td><td>工厂给你的单件价格</td><td>¥160</td></tr>
+                <tr><td>人民币兑澳元汇率</td><td>1 澳元可兑换多少人民币</td><td>4.71</td></tr>
+                <tr><td>中国境内运费</td><td>工厂寄到集运仓的单件分摊</td><td>¥5</td></tr>
+                <tr><td>国际物流费用</td><td>中国到澳洲每件分摊</td><td>A$8</td></tr>
+                <tr><td>澳洲本地配送费用</td><td>寄给澳洲客户的费用</td><td>A$10</td></tr>
+                <tr><td>包装成本</td><td>纸盒、气泡膜等</td><td>A$2</td></tr>
+                <tr><td>澳洲销售价格</td><td>计划卖多少钱</td><td>A$49.95</td></tr>
+                <tr><td>平台佣金比例</td><td>平台抽成比例，输入百分比数字即可</td><td>12</td></tr>
+                <tr><td>广告成本</td><td>平均每卖一件花的广告费</td><td>A$5</td></tr>
+                <tr><td>GST比例</td><td>澳洲商品及服务税，输入百分比数字即可</td><td>10</td></tr>
+                <tr><td>退货及损耗比例</td><td>预留比例，输入百分比数字即可</td><td>5</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </details>
+        <div class="grid">
+          <label>产品名称<input id="name" type="text" placeholder="例如：保温杯" required /></label>
+          <label>人民币采购价<input id="purchaseCny" type="number" min="0" step="0.01" required /></label>
+          <label>人民币兑澳元汇率<input id="exchangeRate" type="number" min="0.0001" step="0.0001" placeholder="例如：4.80" required /></label>
+          <label>中国境内运费<input id="domesticFreightCny" type="number" min="0" step="0.01" required /></label>
+          <label>国际物流费用<input id="internationalFreightAud" type="number" min="0" step="0.01" required /></label>
+          <label>澳洲本地配送费用<input id="localDeliveryAud" type="number" min="0" step="0.01" required /></label>
+          <label>包装成本<input id="packagingAud" type="number" min="0" step="0.01" required /></label>
+          <label>澳洲销售价格<input id="salePriceAud" type="number" min="0" step="0.01" required /></label>
+          <label>平台佣金比例（%）<input id="commissionRate" type="number" min="0" step="0.01" required /></label>
+          <label>广告成本<input id="adCostAud" type="number" min="0" step="0.01" required /></label>
+          <label>GST比例（%）<input id="gstRate" type="number" min="0" step="0.01" required /></label>
+          <label>退货及损耗比例（%）<input id="returnLossRate" type="number" min="0" step="0.01" required /></label>
+        </div>
+        <div class="actions">
+          <button class="primary" type="button" id="calculateBtn">计算利润</button>
+          <button class="secondary" type="submit" id="submitBtn">保存产品</button>
+          <button class="secondary" type="button" id="resetBtn">清空表单</button>
+          <button class="secondary" type="button" id="exportBtn">导出 CSV</button>
+        </div>
+      </form>
+      <div id="currentResult" class="current-result" aria-live="polite"></div>
+    </section>
+
+    <section class="panel" aria-labelledby="resultTitle">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">计算结果</p>
+          <h2 id="resultTitle">产品利润清单</h2>
+        </div>
+        <p class="hint">金额默认以 AUD 显示，人民币项目按汇率换算。</p>
+      </div>
+      <div id="emptyState" class="empty-state">暂无产品，请添加产品或载入示例数据。</div>
+      <div class="table-wrap" id="tableWrap" hidden>
+        <table>
+          <thead>
+            <tr>
+              <th>产品</th>
+              <th>澳元采购成本</th>
+              <th>产品落地成本</th>
+              <th>平台佣金</th>
+              <th>GST金额</th>
+              <th>预计净利润</th>
+              <th>净利润率</th>
+              <th>盈亏平衡售价</th>
+              <th>最大可接受广告成本</th>
+              <th>操作</th>
+            </tr>
+          </thead>
+          <tbody id="productTable"></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <footer>数据保存在当前浏览器 localStorage 中，不会上传到服务器。</footer>
+  <script src="./script.js"></script>
+</body>
+</html>
